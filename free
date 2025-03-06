@@ -4,17 +4,98 @@ local p = game.Players.LocalPlayer
 local running = false
 
 local function getKey()
-    local success, res = pcall(function()
-        return game:HttpGet(key_url)
-    end)
+    local success, res = pcall(function() return game:HttpGet(key_url) end)
     return success and res:match("^%s*(.-)%s*$") or nil
+end
+
+local function getRandomPlayer()
+    local players = {}
+    for _, v in pairs(game.Players:GetPlayers()) do
+        if v ~= p and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            table.insert(players, v)
+        end
+    end
+    return #players > 0 and players[math.random(1, #players)] or nil
+end
+
+local function getRandomEnemy()
+    local players = {}
+    local myChar = p.Character
+    local myTeam = myChar and myChar:FindFirstChild("TeamBG")
+    
+    for _, v in pairs(game.Workspace.Live:GetChildren()) do
+    local teamBG = v:FindFirstChild("TeamBG")
+    if v:IsA("Player") and teamBG and teamBG.Value ~= myTeam then
+        table.insert(players, v)
+    end
+end
+
+    return #players > 0 and players[math.random(1, #players)] or nil
+end
+
+local function followPlayers()
+    running = true
+    while running do
+        local target = getRandomPlayer()
+        if not target then task.wait(1) continue end
+
+        repeat  
+            if not running then return end  
+            if target.Character and target.Character:FindFirstChild("HumanoidRootPart") and p.Character then  
+                p.Character:WaitForChild("HumanoidRootPart").CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)  
+            else  
+                break  
+            end  
+            task.wait(0.001)  
+        until not target.Character or not target.Character.Parent  
+    end
+end
+
+local function followEnemies()
+    running = true
+    while running do
+        local target = getRandomEnemy()
+        if not target then task.wait(1) continue end
+
+        repeat  
+            if not running then return end  
+            if target.Character and target.Character:FindFirstChild("HumanoidRootPart") and p.Character then  
+                p.Character:WaitForChild("HumanoidRootPart").CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)  
+            else  
+                break  
+            end  
+            task.wait(0.001)  
+        until not target.Character or not target.Character.Parent  
+    end
+end
+
+local function followDummy()
+    running = true
+    local d
+    repeat
+        d = game.Workspace.Live:FindFirstChild("Weakest Dummy")
+        task.wait()
+    until d
+    local t = d:WaitForChild("Torso")
+
+    while running and d and d.Parent and t and t.Parent do  
+        p.Character.HumanoidRootPart.CFrame = t.CFrame * CFrame.new(0, 0, 3)  
+        task.wait(0.001)  
+    end  
+
+    d.AncestryChanged:Connect(function()  
+        if not running then return end  
+        repeat task.wait() until game.Workspace.Live:FindFirstChild("Weakest Dummy")  
+        d = game.Workspace.Live:FindFirstChild("Weakest Dummy")  
+        if d then t = d:WaitForChild("Torso") followDummy() end  
+    end)
 end
 
 local gui = Instance.new("ScreenGui", game.CoreGui)
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 200, 0, 210)
-frame.Position = UDim2.new(0.5, -100, 0.5, -105)
+frame.Size = UDim2.new(0, 200, 0, 250)
+frame.Position = UDim2.new(0.5, -100, 0.5, -125)
 frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 frame.Active = true
 frame.Draggable = true
@@ -26,19 +107,55 @@ title.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
 title.Text = "C5_TSB"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 
+local playersBtn = Instance.new("TextButton", frame)
+playersBtn.Size = UDim2.new(0, 180, 0, 30)
+playersBtn.Position = UDim2.new(0, 10, 0, 40)
+playersBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+playersBtn.Text = "Follow Players"
+
+local duelBtn = Instance.new("TextButton", frame)
+duelBtn.Size = UDim2.new(0, 180, 0, 30)
+duelBtn.Position = UDim2.new(0, 10, 0, 80)
+duelBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+duelBtn.Text = "Follow Player(duel) [Beta]"
+
+local dummyBtn = Instance.new("TextButton", frame)
+dummyBtn.Size = UDim2.new(0, 180, 0, 30)
+dummyBtn.Position = UDim2.new(0, 10, 0, 120)
+dummyBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+dummyBtn.Text = "Follow Dummy"
+
 local stopBtn = Instance.new("TextButton", frame)
 stopBtn.Size = UDim2.new(0, 180, 0, 30)
 stopBtn.Position = UDim2.new(0, 10, 0, 160)
 stopBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 stopBtn.Text = "Stop"
 
+playersBtn.MouseButton1Click:Connect(function()
+    running = false
+    task.wait(0.2)
+    task.spawn(followPlayers)
+end)
+
+duelBtn.MouseButton1Click:Connect(function()
+    running = false
+    task.wait(0.2)
+    task.spawn(followEnemies)
+end)
+
+dummyBtn.MouseButton1Click:Connect(function()
+    running = false
+    task.wait(0.2)
+    task.spawn(followDummy)
+end)
+
 stopBtn.MouseButton1Click:Connect(function()
     running = false
 end)
 
 local keySystem = Instance.new("Frame", gui)
-keySystem.Size = UDim2.new(0, 200, 0, 150)
-keySystem.Position = UDim2.new(0.5, -100, 0.5, -75)
+keySystem.Size = UDim2.new(0, 200, 0, 120)
+keySystem.Position = UDim2.new(0.5, -100, 0.5, -60)
 keySystem.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 keySystem.Visible = true
 
@@ -55,16 +172,10 @@ keyInput.PlaceholderText = "Nhập key..."
 keyInput.Text = ""
 
 local keyCheck = Instance.new("TextButton", keySystem)
-keyCheck.Size = UDim2.new(0, 85, 0, 30)
+keyCheck.Size = UDim2.new(0, 180, 0, 30)
 keyCheck.Position = UDim2.new(0, 10, 0, 80)
-keyCheck.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+keyCheck.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
 keyCheck.Text = "Check Key"
-
-local discordBtn = Instance.new("TextButton", keySystem)
-discordBtn.Size = UDim2.new(0, 85, 0, 30)
-discordBtn.Position = UDim2.new(0, 105, 0, 80)
-discordBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 255)
-discordBtn.Text = "Lấy Key ở Dis"
 
 keyCheck.MouseButton1Click:Connect(function()
     local correctKey = getKey()
@@ -76,7 +187,4 @@ keyCheck.MouseButton1Click:Connect(function()
         task.wait(1)
         keyTitle.Text = "Nhập Key"
     end
-end)
-
-discordBtn.MouseButton1Click:Connect(function()
 end)
