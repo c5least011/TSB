@@ -76,6 +76,12 @@ frame.Active = true
 frame.Draggable = true
 frame.Visible = false
 
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, 0, 0, 30)
+title.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+title.Text = "C5_TSB"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+
 local playersBtn = Instance.new("TextButton", frame)
 playersBtn.Size = UDim2.new(0, 180, 0, 30)
 playersBtn.Position = UDim2.new(0, 10, 0, 40)
@@ -90,7 +96,7 @@ duelBtn.Text = "Players (Duel) [Beta]"
 
 local stopBtn = Instance.new("TextButton", frame)
 stopBtn.Size = UDim2.new(0, 180, 0, 30)
-stopBtn.Position = UDim2.new(0, 10, 0, 160)
+stopBtn.Position = UDim2.new(0, 10, 0, 120)
 stopBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 stopBtn.Text = "Stop"
 
@@ -108,4 +114,52 @@ end)
 
 stopBtn.MouseButton1Click:Connect(function()
     running = false
+end)
+
+local keySystem = Instance.new("Frame", gui)
+keySystem.Size = UDim2.new(0, 200, 0, 120)
+keySystem.Position = UDim2.new(0.5, -100, 0.5, -60)
+keySystem.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+keySystem.Visible = true
+
+local keyTitle = Instance.new("TextLabel", keySystem)
+keyTitle.Size = UDim2.new(1, 0, 0, 30)
+keyTitle.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+keyTitle.Text = "Nhập Key"
+
+local keyInput = Instance.new("TextBox", keySystem)
+keyInput.Size = UDim2.new(0, 180, 0, 30)
+keyInput.Position = UDim2.new(0, 10, 0, 40)
+keyInput.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+keyInput.PlaceholderText = "Nhập key..."
+keyInput.Text = ""
+
+local keyCheck = Instance.new("TextButton", keySystem)
+keyCheck.Size = UDim2.new(0, 85, 0, 30)
+keyCheck.Position = UDim2.new(0, 10, 0, 80)
+keyCheck.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+keyCheck.Text = "Check Key"
+
+local keyDiscord = Instance.new("TextButton", keySystem)
+keyDiscord.Size = UDim2.new(0, 85, 0, 30)
+keyDiscord.Position = UDim2.new(0, 105, 0, 80)
+keyDiscord.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
+keyDiscord.Text = "Key ở Dis"
+
+keyCheck.MouseButton1Click:Connect(function()
+    local correctKey = getKey()
+    if correctKey and keyInput.Text == correctKey then
+        keySystem.Visible = false
+        frame.Visible = true
+    else
+        keyTitle.Text = "Key sai!"
+        task.wait(1)
+        keyTitle.Text = "Nhập Key"
+    end
+end)
+
+keyDiscord.MouseButton1Click:Connect(function()
+    keyTitle.Text = "Lấy key ở Discord!"
+    task.wait(1)
+    keyTitle.Text = "Nhập Key"
 end)
