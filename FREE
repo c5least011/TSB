@@ -1,4 +1,4 @@
-local key_url = "https://raw.githubusercontent.com/c5least011/Tsb-Vip/refs/heads/main/key"
+local key_url = "https://raw.githubusercontent.com/c5least011/Tsb-Vip/refs/heads/main/key.json"
 
 local p = game.Players.LocalPlayer
 local running = false
