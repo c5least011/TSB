@@ -2,7 +2,17 @@ local key_url = "https://raw.githubusercontent.com/c5least011/Tsb-Vip/refs/heads
 
 local p = game.Players.LocalPlayer
 local running = false
-local currentTarget = nil
+local playerMode = false
+
+local function notify(title, text)
+    game.StarterGui:SetCore("SendNotification", {
+        Title = title;
+        Text = text;
+        Duration = 3.4;
+    })
+end
+
+notify("C5_TSB", "Thanks for using my script :3")
 
 local function getKey()
     local success, res = pcall(function() return game:HttpGet(key_url) end)
@@ -16,41 +26,52 @@ local function getRandomPlayer()
             table.insert(players, v)
         end
     end
-    return #players > 0 and players[math.random(#players)] or nil
+    return #players > 0 and players[math.random(1, #players)] or nil
 end
 
-local function teleportToTarget()
-    running = true
-    while running do
-        if not currentTarget or not currentTarget.Parent then
-            currentTarget = getRandomPlayer()
-        end
+local function followPlayers()
+    local target = getRandomPlayer()
+    if not target then
+        notify("C5_TSB", "No player to tp")
+        return
+    end
 
-        if currentTarget then
-            local hrp = currentTarget.Character and currentTarget.Character:FindFirstChild("HumanoidRootPart")
-            if hrp and p.Character then
-                p.Character:WaitForChild("HumanoidRootPart").CFrame = hrp.CFrame * CFrame.new(0, 0, 3)
+    running = true
+    playerMode = true
+
+    while running do
+        if target.Character and target.Character:FindFirstChild("HumanoidRootPart") and p.Character then
+            p.Character:WaitForChild("HumanoidRootPart").CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+        else
+            target = getRandomPlayer()
+            if not target then
+                notify("C5_TSB", "No player to tp")
+                return
             end
         end
-        task.wait(0.5)
+        task.wait(0.0001)
     end
 end
 
 local function changeTarget()
-    currentTarget = getRandomPlayer()
+    if not playerMode then
+        notify("C5_TSB", "Loop tp to player first")
+        return
+    end
+
+    running = false
+    task.wait(0.2)
+    task.spawn(followPlayers)
 end
 
-local function chaosMode()
+local function chaos()
     running = true
     while running do
-        local randomTarget = getRandomPlayer()
-        if randomTarget then
-            local hrp = randomTarget.Character and randomTarget.Character:FindFirstChild("HumanoidRootPart")
-            if hrp and p.Character then
-                p.Character:WaitForChild("HumanoidRootPart").CFrame = hrp.CFrame * CFrame.new(0, 0, 3)
-            end
+        local target = getRandomPlayer()
+        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") and p.Character then
+            p.Character:WaitForChild("HumanoidRootPart").CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
         end
-        task.wait(0.2)
+        task.wait(0.0001)
     end
 end
 
@@ -65,7 +86,7 @@ local function followDummy()
 
     while running and d and d.Parent and t and t.Parent do
         p.Character.HumanoidRootPart.CFrame = t.CFrame * CFrame.new(0, 0, 3)
-        task.wait(0.001)
+        task.wait(0.0001)
     end
 
     d.AncestryChanged:Connect(function()
@@ -76,11 +97,17 @@ local function followDummy()
     end)
 end
 
+local function stopTp()
+    running = false
+    playerMode = false
+    notify("C5_TSB", "Stopped tp")
+end
+
 local gui = Instance.new("ScreenGui", game.CoreGui)
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 200, 0, 250)
-frame.Position = UDim2.new(0.5, -100, 0.5, -125)
+frame.Size = UDim2.new(0, 200, 0, 300)
+frame.Position = UDim2.new(0.5, -100, 0.5, -150)
 frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 frame.Active = true
 frame.Draggable = true
@@ -92,29 +119,29 @@ title.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
 title.Text = "C5_TSB"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-local followPlayerBtn = Instance.new("TextButton", frame)
-followPlayerBtn.Size = UDim2.new(0, 180, 0, 30)
-followPlayerBtn.Position = UDim2.new(0, 10, 0, 40)
-followPlayerBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-followPlayerBtn.Text = "players"
+local playersBtn = Instance.new("TextButton", frame)
+playersBtn.Size = UDim2.new(0, 180, 0, 30)
+playersBtn.Position = UDim2.new(0, 10, 0, 40)
+playersBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+playersBtn.Text = "Players"
 
 local changeTargetBtn = Instance.new("TextButton", frame)
 changeTargetBtn.Size = UDim2.new(0, 180, 0, 30)
 changeTargetBtn.Position = UDim2.new(0, 10, 0, 80)
 changeTargetBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-changeTargetBtn.Text = "change player(for function 1)"
+changeTargetBtn.Text = "Change player(for function 1)"
 
 local chaosBtn = Instance.new("TextButton", frame)
 chaosBtn.Size = UDim2.new(0, 180, 0, 30)
 chaosBtn.Position = UDim2.new(0, 10, 0, 120)
 chaosBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-chaosBtn.Text = "Chaos(shouldnt use)"
+chaosBtn.Text = "Chaos(shouldn't use)"
 
 local dummyBtn = Instance.new("TextButton", frame)
 dummyBtn.Size = UDim2.new(0, 180, 0, 30)
 dummyBtn.Position = UDim2.new(0, 10, 0, 160)
 dummyBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-dummyBtn.Text = "dummy"
+dummyBtn.Text = "Dummy"
 
 local stopBtn = Instance.new("TextButton", frame)
 stopBtn.Size = UDim2.new(0, 180, 0, 30)
@@ -122,31 +149,30 @@ stopBtn.Position = UDim2.new(0, 10, 0, 200)
 stopBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 stopBtn.Text = "STOP"
 
-followPlayerBtn.MouseButton1Click:Connect(function()
+playersBtn.MouseButton1Click:Connect(function()
     running = false
     task.wait(0.2)
-    task.spawn(teleportToTarget)
+    task.spawn(followPlayers)
+    notify("C5_TSB", "Successful")
 end)
 
-changeTargetBtn.MouseButton1Click:Connect(function()
-    changeTarget()
-end)
+changeTargetBtn.MouseButton1Click:Connect(changeTarget)
 
 chaosBtn.MouseButton1Click:Connect(function()
     running = false
     task.wait(0.2)
-    task.spawn(chaosMode)
+    task.spawn(chaos)
+    notify("C5_TSB", "Successful")
 end)
 
 dummyBtn.MouseButton1Click:Connect(function()
     running = false
     task.wait(0.2)
     task.spawn(followDummy)
+    notify("C5_TSB", "Successful")
 end)
 
-stopBtn.MouseButton1Click:Connect(function()
-    running = false
-end)
+stopBtn.MouseButton1Click:Connect(stopTp)
 
 local keySystem = Instance.new("Frame", gui)
 keySystem.Size = UDim2.new(0, 200, 0, 120)
@@ -173,13 +199,7 @@ keyCheck.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
 keyCheck.Text = "Check Key"
 
 keyCheck.MouseButton1Click:Connect(function()
-    local correctKey = getKey()
-    if correctKey and keyInput.Text == correctKey then
-        keySystem.Visible = false
-        frame.Visible = true
-    else
-        keyTitle.Text = "Key sai!"
-        task.wait(1)
-        keyTitle.Text = "Nhập Key"
-    end
+    local success = getKey() == keyInput.Text
+    notify("Key System", success and "Successful" or "Unsuccessful")
+    if success then keySystem.Visible = false frame.Visible = true end
 end)
