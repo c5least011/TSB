@@ -2,6 +2,7 @@ local key_url = "https://raw.githubusercontent.com/c5least011/Tsb-Vip/refs/heads
 
 local p = game.Players.LocalPlayer
 local running = false
+local currentTarget = nil
 
 local function getKey()
     local success, res = pcall(function() return game:HttpGet(key_url) end)
@@ -15,53 +16,41 @@ local function getRandomPlayer()
             table.insert(players, v)
         end
     end
-    return #players > 0 and players[math.random(1, #players)] or nil
+    return #players > 0 and players[math.random(#players)] or nil
 end
 
-local function teleportToRandomTeamBG()
+local function teleportToTarget()
     running = true
     while running do
-        local players = {}
-        for _, v in ipairs(game.Workspace.Live:GetChildren()) do
-            if v:FindFirstChild("TeamBG") then
-                table.insert(players, v)
-            end
+        if not currentTarget or not currentTarget.Parent then
+            currentTarget = getRandomPlayer()
         end
 
-        if #players > 0 then
-            local target = players[math.random(#players)]
-            local hrp = target:FindFirstChild("HumanoidRootPart")
-            
-            if hrp then
-                local newPos = hrp.Position - hrp.CFrame.LookVector * 3
-                local character = game.Players.LocalPlayer.Character
-                if character then
-                    local charHRP = character:FindFirstChild("HumanoidRootPart")
-                    if charHRP then
-                        charHRP.CFrame = CFrame.new(newPos)
-                    end
-                end
+        if currentTarget then
+            local hrp = currentTarget.Character and currentTarget.Character:FindFirstChild("HumanoidRootPart")
+            if hrp and p.Character then
+                p.Character:WaitForChild("HumanoidRootPart").CFrame = hrp.CFrame * CFrame.new(0, 0, 3)
             end
         end
-        task.wait(1)
+        task.wait(0.5)
     end
 end
 
-local function followPlayers()
+local function changeTarget()
+    currentTarget = getRandomPlayer()
+end
+
+local function chaosMode()
     running = true
     while running do
-        local target = getRandomPlayer()
-        if not target then task.wait(1) continue end
-
-        repeat  
-            if not running then return end  
-            if target.Character and target.Character:FindFirstChild("HumanoidRootPart") and p.Character then  
-                p.Character:WaitForChild("HumanoidRootPart").CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)  
-            else  
-                break  
-            end  
-            task.wait(0.001)  
-        until not target.Character or not target.Character.Parent  
+        local randomTarget = getRandomPlayer()
+        if randomTarget then
+            local hrp = randomTarget.Character and randomTarget.Character:FindFirstChild("HumanoidRootPart")
+            if hrp and p.Character then
+                p.Character:WaitForChild("HumanoidRootPart").CFrame = hrp.CFrame * CFrame.new(0, 0, 3)
+            end
+        end
+        task.wait(0.2)
     end
 end
 
@@ -74,16 +63,16 @@ local function followDummy()
     until d
     local t = d:WaitForChild("Torso")
 
-    while running and d and d.Parent and t and t.Parent do  
-        p.Character.HumanoidRootPart.CFrame = t.CFrame * CFrame.new(0, 0, 3)  
-        task.wait(0.001)  
-    end  
+    while running and d and d.Parent and t and t.Parent do
+        p.Character.HumanoidRootPart.CFrame = t.CFrame * CFrame.new(0, 0, 3)
+        task.wait(0.001)
+    end
 
-    d.AncestryChanged:Connect(function()  
-        if not running then return end  
-        repeat task.wait() until game.Workspace.Live:FindFirstChild("Weakest Dummy")  
-        d = game.Workspace.Live:FindFirstChild("Weakest Dummy")  
-        if d then t = d:WaitForChild("Torso") followDummy() end  
+    d.AncestryChanged:Connect(function()
+        if not running then return end
+        repeat task.wait() until game.Workspace.Live:FindFirstChild("Weakest Dummy")
+        d = game.Workspace.Live:FindFirstChild("Weakest Dummy")
+        if d then t = d:WaitForChild("Torso") followDummy() end
     end)
 end
 
@@ -103,40 +92,50 @@ title.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
 title.Text = "C5_TSB"
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-local playersBtn = Instance.new("TextButton", frame)
-playersBtn.Size = UDim2.new(0, 180, 0, 30)
-playersBtn.Position = UDim2.new(0, 10, 0, 40)
-playersBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-playersBtn.Text = "Follow Players"
+local followPlayerBtn = Instance.new("TextButton", frame)
+followPlayerBtn.Size = UDim2.new(0, 180, 0, 30)
+followPlayerBtn.Position = UDim2.new(0, 10, 0, 40)
+followPlayerBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+followPlayerBtn.Text = "players"
 
-local duelBtn = Instance.new("TextButton", frame)
-duelBtn.Size = UDim2.new(0, 180, 0, 30)
-duelBtn.Position = UDim2.new(0, 10, 0, 80)
-duelBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-duelBtn.Text = "TP Random TeamBG"
+local changeTargetBtn = Instance.new("TextButton", frame)
+changeTargetBtn.Size = UDim2.new(0, 180, 0, 30)
+changeTargetBtn.Position = UDim2.new(0, 10, 0, 80)
+changeTargetBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+changeTargetBtn.Text = "change player(for function 1)"
+
+local chaosBtn = Instance.new("TextButton", frame)
+chaosBtn.Size = UDim2.new(0, 180, 0, 30)
+chaosBtn.Position = UDim2.new(0, 10, 0, 120)
+chaosBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+chaosBtn.Text = "Chaos(shouldnt use)"
 
 local dummyBtn = Instance.new("TextButton", frame)
 dummyBtn.Size = UDim2.new(0, 180, 0, 30)
-dummyBtn.Position = UDim2.new(0, 10, 0, 120)
+dummyBtn.Position = UDim2.new(0, 10, 0, 160)
 dummyBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-dummyBtn.Text = "Follow Dummy"
+dummyBtn.Text = "dummy"
 
 local stopBtn = Instance.new("TextButton", frame)
 stopBtn.Size = UDim2.new(0, 180, 0, 30)
-stopBtn.Position = UDim2.new(0, 10, 0, 160)
+stopBtn.Position = UDim2.new(0, 10, 0, 200)
 stopBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-stopBtn.Text = "Stop"
+stopBtn.Text = "STOP"
 
-playersBtn.MouseButton1Click:Connect(function()
+followPlayerBtn.MouseButton1Click:Connect(function()
     running = false
     task.wait(0.2)
-    task.spawn(followPlayers)
+    task.spawn(teleportToTarget)
 end)
 
-duelBtn.MouseButton1Click:Connect(function()
+changeTargetBtn.MouseButton1Click:Connect(function()
+    changeTarget()
+end)
+
+chaosBtn.MouseButton1Click:Connect(function()
     running = false
     task.wait(0.2)
-    task.spawn(teleportToRandomTeamBG)
+    task.spawn(chaosMode)
 end)
 
 dummyBtn.MouseButton1Click:Connect(function()
