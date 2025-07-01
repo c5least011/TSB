@@ -1,23 +1,18 @@
-local key_url = "https://raw.githubusercontent.com/c5least011/Tsb-Vip/refs/heads/main/key"
-
 local p = game.Players.LocalPlayer
 local running = false
 local playerMode = false
+local autoFrozen = false
+local autoFrozenThread
 
 local function notify(title, text)
     game.StarterGui:SetCore("SendNotification", {
-        Title = title;
-        Text = text;
-        Duration = 3.4;
+        Title = title,
+        Text = text,
+        Duration = 3.4
     })
 end
 
 notify("C5_TSB", "Thanks for using my script :3")
-
-local function getKey()
-    local success, res = pcall(function() return game:HttpGet(key_url) end)
-    return success and res:match("^%s*(.-)%s*$") or nil
-end
 
 local function getRandomPlayer()
     local players = {}
@@ -31,23 +26,14 @@ end
 
 local function followPlayers()
     local target = getRandomPlayer()
-    if not target then
-        notify("C5_TSB", "No player to tp")
-        return
-    end
-
-    running = true
-    playerMode = true
-
+    if not target then notify("C5_TSB", "No player to tp") return end
+    running = true playerMode = true
     while running do
         if target.Character and target.Character:FindFirstChild("HumanoidRootPart") and p.Character then
             p.Character:WaitForChild("HumanoidRootPart").CFrame = target.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
         else
             target = getRandomPlayer()
-            if not target then
-                notify("C5_TSB", "No player to tp")
-                return
-            end
+            if not target then notify("C5_TSB", "No player to tp") return end
         end
         task.wait(0.0001)
     end
@@ -58,7 +44,6 @@ local function changeTarget()
         notify("C5_TSB", "Loop tp to player first")
         return
     end
-
     running = false
     task.wait(0.2)
     task.spawn(followPlayers)
@@ -78,10 +63,7 @@ end
 local function followDummy()
     running = true
     local d
-    repeat
-        d = game.Workspace.Live:FindFirstChild("Weakest Dummy")
-        task.wait()
-    until d
+    repeat d = game.Workspace.Live:FindFirstChild("Weakest Dummy") task.wait() until d
     local t = d:WaitForChild("Torso")
 
     while running and d and d.Parent and t and t.Parent do
@@ -103,103 +85,103 @@ local function stopTp()
     notify("C5_TSB", "Stopped tp")
 end
 
+local function toggleAutoFrozen(state)
+    autoFrozen = state
+    if autoFrozen then
+        autoFrozenThread = task.spawn(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/c5least011/Tsb-Vip/refs/heads/main/auto-FrozenLock"))()
+        end)
+        notify("C5_TSB", "Auto Frozen ON")
+    else
+        if autoFrozenThread then task.cancel(autoFrozenThread) end
+        notify("C5_TSB", "Auto Frozen OFF")
+    end
+end
+
+-- GUI Setup
 local gui = Instance.new("ScreenGui", game.CoreGui)
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 200, 0, 300)
-frame.Position = UDim2.new(0.5, -100, 0.5, -150)
+frame.Size = UDim2.new(0, 220, 0, 300)
+frame.Position = UDim2.new(0.5, -110, 0.5, -150)
 frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 frame.Active = true
 frame.Draggable = true
-frame.Visible = false
 
 local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1, 0, 0, 30)
 title.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
 title.Text = "C5_TSB"
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.TextColor3 = Color3.new(1, 1, 1)
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 18
 
-local playersBtn = Instance.new("TextButton", frame)
-playersBtn.Size = UDim2.new(0, 180, 0, 30)
-playersBtn.Position = UDim2.new(0, 10, 0, 40)
-playersBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-playersBtn.Text = "Players"
+local scroll = Instance.new("ScrollingFrame", frame)
+scroll.Position = UDim2.new(0, 0, 0, 30)
+scroll.Size = UDim2.new(1, 0, 1, -30)
+scroll.CanvasSize = UDim2.new(0, 0, 0, 500)
+scroll.ScrollBarThickness = 6
+scroll.BackgroundTransparency = 1
 
-local changeTargetBtn = Instance.new("TextButton", frame)
-changeTargetBtn.Size = UDim2.new(0, 180, 0, 30)
-changeTargetBtn.Position = UDim2.new(0, 10, 0, 80)
-changeTargetBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-changeTargetBtn.Text = "Change player(for function 1)"
+local layout = Instance.new("UIListLayout", scroll)
+layout.Padding = UDim.new(0, 6)
 
-local chaosBtn = Instance.new("TextButton", frame)
-chaosBtn.Size = UDim2.new(0, 180, 0, 30)
-chaosBtn.Position = UDim2.new(0, 10, 0, 120)
-chaosBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-chaosBtn.Text = "Chaos(shouldn't use)"
+local function createBtn(txt, func)
+    local btn = Instance.new("TextButton", scroll)
+    btn.Size = UDim2.new(1, -12, 0, 30)
+    btn.Position = UDim2.new(0, 6, 0, 0)
+    btn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    btn.Text = txt
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 16
+    btn.MouseButton1Click:Connect(func)
+end
 
-local dummyBtn = Instance.new("TextButton", frame)
-dummyBtn.Size = UDim2.new(0, 180, 0, 30)
-dummyBtn.Position = UDim2.new(0, 10, 0, 160)
-dummyBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-dummyBtn.Text = "Dummy"
+local function createToggle(txt, callback)
+    local toggle = false
+    local btn = Instance.new("TextButton", scroll)
+    btn.Size = UDim2.new(1, -12, 0, 30)
+    btn.Position = UDim2.new(0, 6, 0, 0)
+    btn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    btn.Text = txt .. ": OFF"
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 16
 
-local stopBtn = Instance.new("TextButton", frame)
-stopBtn.Size = UDim2.new(0, 180, 0, 30)
-stopBtn.Position = UDim2.new(0, 10, 0, 200)
-stopBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-stopBtn.Text = "STOP"
+    btn.MouseButton1Click:Connect(function()
+        toggle = not toggle
+        btn.Text = txt .. ": " .. (toggle and "ON" or "OFF")
+        callback(toggle)
+    end)
+end
 
-playersBtn.MouseButton1Click:Connect(function()
-    running = false
-    task.wait(0.2)
+-- Add Buttons
+createBtn("Players", function()
+    running = false task.wait(0.2)
     task.spawn(followPlayers)
-    notify("C5_TSB", "Successful")
+    notify("C5_TSB", "Started Player TP")
 end)
 
-changeTargetBtn.MouseButton1Click:Connect(changeTarget)
+createBtn("Change Player", changeTarget)
 
-chaosBtn.MouseButton1Click:Connect(function()
-    running = false
-    task.wait(0.2)
+createBtn("Chaos", function()
+    running = false task.wait(0.2)
     task.spawn(chaos)
-    notify("C5_TSB", "Successful")
+    notify("C5_TSB", "Started Chaos TP")
 end)
 
-dummyBtn.MouseButton1Click:Connect(function()
-    running = false
-    task.wait(0.2)
+createBtn("Dummy", function()
+    running = false task.wait(0.2)
     task.spawn(followDummy)
-    notify("C5_TSB", "Successful")
+    notify("C5_TSB", "Started Dummy TP")
 end)
 
-stopBtn.MouseButton1Click:Connect(stopTp)
+createBtn("STOP", stopTp)
 
-local keySystem = Instance.new("Frame", gui)
-keySystem.Size = UDim2.new(0, 200, 0, 120)
-keySystem.Position = UDim2.new(0.5, -100, 0.5, -60)
-keySystem.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-keySystem.Visible = true
-
-local keyTitle = Instance.new("TextLabel", keySystem)
-keyTitle.Size = UDim2.new(1, 0, 0, 30)
-keyTitle.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-keyTitle.Text = "Nhập Key"
-
-local keyInput = Instance.new("TextBox", keySystem)
-keyInput.Size = UDim2.new(0, 180, 0, 30)
-keyInput.Position = UDim2.new(0, 10, 0, 40)
-keyInput.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-keyInput.PlaceholderText = "Nhập key..."
-keyInput.Text = ""
-
-local keyCheck = Instance.new("TextButton", keySystem)
-keyCheck.Size = UDim2.new(0, 180, 0, 30)
-keyCheck.Position = UDim2.new(0, 10, 0, 80)
-keyCheck.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-keyCheck.Text = "Check Key"
-
-keyCheck.MouseButton1Click:Connect(function()
-    local success = getKey() == keyInput.Text
-    notify("Key System", success and "Successful" or "Unsuccessful")
-    if success then keySystem.Visible = false frame.Visible = true end
+createBtn("Trashcan", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/c5least011/Tsb-Vip/refs/heads/main/Auto-Trashcan"))()
+    notify("C5_TSB", "Trashcan Loaded")
 end)
+
+createToggle("Auto Frozen", toggleAutoFrozen)
